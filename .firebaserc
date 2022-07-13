@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "prod": "ecommerce-mp",
+    "dev": "shoppit-app-stg"
+  },
+  "targets": {}
+}
