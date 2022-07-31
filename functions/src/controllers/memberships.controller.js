@@ -37,6 +37,26 @@ class MembershipsController {
       next(error);
     }
   }
+  async getMemberships(req, res, next) {
+    try {
+      const memberships = await membershipsService.getMemberships();
+      res.status(200).send(memberships);
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getMembership(req, res, next) {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        throw boom.badData('missing required fields');
+      }
+      const membership = await membershipsService.getMembership(id);
+      res.status(200).send(membership);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = MembershipsController;

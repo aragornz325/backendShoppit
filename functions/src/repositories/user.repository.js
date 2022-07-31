@@ -13,6 +13,7 @@ const index = client.initIndex(`${config.algoliaUsersIndexName}`);
 
 class UserRepository {
   async createUser(user) {
+    functions.logger.info('execute create user');
     try {
       functions.logger.info(
         `check if the user with email: ${user.email} already exists`
@@ -22,6 +23,7 @@ class UserRepository {
         functions.logger.info(
           `the user with email ${user.email} already exists`
         );
+        return { msg: 'ok' };
       } else {
         if (!user.displayName) {
           user.displayName = ' ';
@@ -93,7 +95,7 @@ class UserRepository {
     }
     await userRef.set(payload, { merge: merge });
     functions.logger.info(`update ok`);
-    return;
+    return { msg: 'ok' };
   }
 
   async getUsersByFilter(search) {
@@ -115,15 +117,21 @@ class UserRepository {
     };
   }
 
-  // async getUserByEmail(email) {
-  //   const userRef = db.collection('users').where('email', '==', email);
-  //   const user = await userRef.get();
-  //   if (!user.exists) {
-  //     functions.logger.error(`user with email ${email} not found`);
-  //     throw boom.badData(`user with email ${email} not found`);
-  //   }
-  //   return user.data();
-  // }
+  async getUserByEmail(email) {
+    const userRef = db.collection('users').where('email', '==', email);
+    let user = '';
+    await userRef
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          user = doc.data();
+        });
+      })
+      .catch((err) => {
+        functions.logger.info(err);
+      });
+    return user;
+  }
 
   async getUsers(search, role, status, limit, offset) {
     if (!search) {
@@ -146,11 +154,17 @@ class UserRepository {
     }
   }
 
-  async getIndexAlgolia(search) {
+  async getIndexAlgolia(search, limit, offset) {
     let usersAlgolia = [];
     let result = [];
     await index
-      .search(`${search}`)
+      .search(
+        `${search}`,
+        {
+          hitsPerPage: limit,
+        },
+        { offset: offset }
+      )
       .then(({ hits }) => (usersAlgolia = hits))
       .catch((err) => {
         throw boom.badData(err);
@@ -158,6 +172,7 @@ class UserRepository {
     usersAlgolia.forEach((user) => {
       result.push(user.objectID);
     });
+
     return result;
   }
 
@@ -175,6 +190,8 @@ class UserRepository {
     const users = [];
     await collectionRef
       .limit(parseInt(limit, 10))
+      .orderBy('lastName', 'asc')
+      .startAfter(offset)
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
@@ -194,8 +211,8 @@ class UserRepository {
   //TODO: manejar offset
   async getUsersWithAlgolia(search, role, status, limit, offset) {
     functions.logger.info('execute search users with algolia');
-    const indexAlgolia = await this.getIndexAlgolia(search);
-    console.log(indexAlgolia.length);
+    const indexAlgolia = await this.getIndexAlgolia(search, limit, offset);
+
     if (indexAlgolia.length <= 0) {
       return { users: [], total: 0 };
     }
@@ -213,6 +230,7 @@ class UserRepository {
       }
       const users = [];
       await collectionRef
+        .orderBy('lastName', 'asc')
         .get()
         .then((snapshot) => {
           snapshot.forEach((doc) => {
@@ -229,7 +247,7 @@ class UserRepository {
       }
     } else {
       const arrayChuncked = await chunckarray(indexAlgolia, 10);
-      let result = [];
+      let users = [];
       for (let i = 0; i < arrayChuncked.length; i++) {
         let collectionRef = db
           .collection('users')
@@ -241,20 +259,20 @@ class UserRepository {
         if (status) {
           collectionRef = collectionRef.where('status', '==', status);
         }
-        const users = [];
+        const result = [];
         await collectionRef
           .get()
           .then((snapshot) => {
             snapshot.forEach((doc) => {
-              users.push(doc.data());
+              result.push(doc.data());
             });
           })
           .catch((err) => {
             throw boom.badData(err);
           });
-        result = result.concat(users);
+        users = users.concat(result);
       }
-      return { users: result, total: result.length };
+      return { users, total: users.length };
     }
   }
 }

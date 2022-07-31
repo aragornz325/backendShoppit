@@ -1,5 +1,7 @@
 const UserServices = require('../services/user.services');
 const service = new UserServices();
+const MembershipsRepository = require('../repositories/memberships.repository');
+const membershipsRepository = new MembershipsRepository();
 
 class UserController {
   async setCustomerClaimToNewUser(user) {
@@ -15,8 +17,9 @@ class UserController {
     try {
       const body = req.body;
       const { id } = req.params;
-      const update = await service.transformCustomerToSeller(body, id);
-      res.status(202).send(update);
+      const result = await service.transformToSeller(body, id);
+
+      res.status(202).send(result);
     } catch (error) {
       next(error);
     }
@@ -84,6 +87,32 @@ class UserController {
       const users = await service.getUsers(search, role, status, limit, offset);
 
       res.status(200).send(users);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserProductsByOwner(req, res, next) {
+    try {
+      const limit = req.query.limit || 10;
+      const offset = req.query.offset || 0;
+      const userId = req.headers['x-user-id'];
+      const products = await service.getUserProductsByOwner(
+        userId,
+        limit,
+        offset
+      );
+      res.status(200).send(products);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async registerUser(req, res, next) {
+    try {
+      const payload = req.body;
+      const newUser = await service.registerUser(payload);
+      res.status(201).send(newUser);
     } catch (error) {
       next(error);
     }

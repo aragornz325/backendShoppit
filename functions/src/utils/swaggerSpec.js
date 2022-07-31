@@ -47,6 +47,160 @@ module.exports = swaggerEdit;
  *
  */
 
+/**
+ * @swagger
+ * path:
+ * /memberships:
+ *  get:
+ *   summary: Get all memberships
+ *   description: Get all memberships
+ *   operationId: getMemberships
+ *   tags: [Memberships]
+ *   parameters:
+ *   - in: header
+ *     name: x-user-id
+ *     required: true
+ *     example: "QbcLwTdVEoRuGejmVKIu"
+ *     schema:
+ *      type: string
+ *      format: uuid
+ *   security:
+ *     - ApiKeySecurity []
+ *     - Token []
+ *   responses:
+ *    '200':
+ *     description: A list of memberships
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: array
+ *          items:
+ *            type: object
+ *            example:
+ *             active: true
+ *             payment_url: "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-0LX91809WX099091"
+ *             paymenc_cycle: "monthly"
+ *             price: "10000"
+ *             description: "Membership 1"
+ *             name: "premium"
+ *             memberships_discounts: [10.58, 25.50]
+ *             created_at: "2020-04-01T00:00:00.000Z"
+ *             membership_benefits: ["benefit 1", "benefit 2"]
+ *             id: "Eo0gsPNyQho5edhNXdp8"
+ *
+ */
+
+// get membership
+/**
+ * @swagger
+ * path:
+ * /memberships/{id}:
+ *  get:
+ *   summary: Get membership by id
+ *   description: Get membership by id
+ *   operationId: getMembershipById
+ *   tags: [Memberships]
+ *   parameters:
+ *   - in: path
+ *     name: id
+ *     required: true
+ *     example: "Eo0gsPNyQho5edhNXdp8"
+ *   - in: header
+ *     name: x-user-id
+ *     required: true
+ *     example: "QbcLwTdVEoRuGejmVKIu"
+ *     schema:
+ *      type: string
+ *      format: uuid
+ *   security:
+ *     - ApiKeySecurity []
+ *     - Token []
+ *   responses:
+ *    '200':
+ *     description: a description of membership
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          example:
+ *            active: true
+ *            payment_url: "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-0LX91809WX099091"
+ *            paymenc_cycle: "monthly"
+ *            price: "10000"
+ *            description: "Membership 1"
+ *            name: "premium"
+ *            memberships_discounts: [10.58, 25.50]
+ *            created_at: "2020-04-01T00:00:00.000Z"
+ *            membership_benefits: ["benefit 1", "benefit 2"]
+ *            id: "Eo0gsPNyQho5edhNXdp8"
+ *    '422':
+ *     description: Unprocessable Entity
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          example:
+ *            statusCode: 422
+ *            error: "Unprocessable Entity"
+ *            message: "membership with ID xxxxxxxxxxxxxxxxx not found"
+ *
+ *
+ */
+
+// create membership
+/**
+ * @swagger
+ * path:
+ * /memberships:
+ *  post:
+ *   summary: Create membership
+ *   description: Create membership
+ *   operationId: createMembership
+ *   tags: [Memberships]
+ *   parameters:
+ *   - in: header
+ *     name: x-user-id
+ *     required: true
+ *     example: "QbcLwTdVEoRuGejmVKIu"
+ *     schema:
+ *      type: string
+ *      format: uuid
+ *   security:
+ *     - ApiKeySecurity []
+ *     - Token []
+ *   requestBody:
+ *     description: Membership object
+ *     required: true
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          example:
+ *            active: true
+ *            payment_url: "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-0LX91809WX099091"
+ *            paymenc_cycle: "monthly"
+ *            price: "10000"
+ *            description: "Membership 1"
+ *            name: "premium"
+ *            memberships_discounts: [10.58, 25.50]
+ *            created_at: "2020-04-01T00:00:00.000Z"
+ *            membership_benefits: ["benefit 1", "benefit 2"]
+ *            id: "Eo0gsPNyQho5edhNXdp8"
+ *   responses:
+ *    '201':
+ *     description: Membership created
+ *     content:
+ *      application/json:
+ *        schema:
+ *          type: object
+ *          example:
+ *            active: true
+ *            payment_url: "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-0LX91809WX099091"
+ *            paymenc_cycle: "monthly"
+ *            price: "10000"
+ *            description: "Membership 1"
+ */
+
 // update seller
 /**
  * @swagger
@@ -77,7 +231,7 @@ module.exports = swaggerEdit;
  *      application/json:
  *        schema:
  *          type: object
- *          $ref: '#/components/schemas/Users'
+ *           $ref: '#/components/schemas/Users'
  *
  *    security:
  *     - Token: []
@@ -293,11 +447,51 @@ module.exports = swaggerEdit;
  *     description: "Error: Unauthorized"
  */
 
-// SCHEMA DE USUARIOS
+// SCHEMAS
 /**
  *  @swagger
  * components:
  *  schemas:
+ *    Memberships:
+ *      type: object
+ *      properties:
+ *        id:
+ *         type: string
+ *        name:
+ *          type: string
+ *        description:
+ *          type: string
+ *        membership_benefits:
+ *          type: array
+ *          items:
+ *           type: string
+ *        memberships_discounts:
+ *          type: array
+ *          items:
+ *           type: number
+ *        price:
+ *          type: number
+ *        payment_cycle:
+ *          type: string
+ *        active:
+ *          type: boolean
+ *        payment_url:
+ *          type: string
+ *      example:
+ *        id: QbcLwTdVEoRuGejmVKIu
+ *        name: "Basic"
+ *        description: "Basic membership"
+ *        price: 0
+ *        payment_cycle: "monthly"
+ *        active: true
+ *        membership_benefits:
+ *         - "Free shipping"
+ *         - "Free returns"
+ *         - "Free cancellation"
+ *         - "Free upgrade"
+ *        memberships_discounts:
+ *         - 20
+ *         - 30
  *    Users:
  *      type: object
  *      properties:
@@ -342,6 +536,8 @@ module.exports = swaggerEdit;
  *          type: array
  *        recentProducts:
  *          type: array
+ *        role:
+ *          type: string
  *        sheetsId:
  *          type: string
  *        storeName:

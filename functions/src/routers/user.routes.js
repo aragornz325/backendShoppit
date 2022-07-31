@@ -31,7 +31,6 @@ router.patch(
   '/:id',
   checkApiKey,
   isAuthenticated,
-  isAuthorized,
   isAuthorized({
     hasRole: ['admin'],
     allowSameUser: true,
@@ -79,6 +78,17 @@ router.patch(
     allowSameUser: false,
   }),
   usercontroller.activateUser
+);
+
+router.get(
+  '/:id/products',
+  checkApiKey,
+  isAuthenticated,
+  isAuthorized({
+    hasRole: ['seller', 'admin'],
+    allowSameUser: true,
+  }),
+  usercontroller.getUserProductsByOwner
 );
 
 module.exports = router;

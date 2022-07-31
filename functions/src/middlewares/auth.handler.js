@@ -2,17 +2,19 @@ const boom = require('@hapi/boom');
 const { getAuth } = require('firebase-admin/auth');
 const { config } = require('../config/config');
 
+getAuth().createUser;
+
 async function isAuthenticated(req, res, next) {
   const { authorization } = req.headers;
   if (!authorization) {
-    next(boom.unauthorized('unauthorized + 1'));
+    next(boom.unauthorized('unauthorized'));
   }
   if (!authorization.startsWith('Bearer ')) {
-    next(boom.unauthorized('unauthorized + 2'));
+    next(boom.unauthorized('unauthorized'));
   }
   const split = authorization.split('Bearer ');
   if (split.length !== 2) {
-    next(boom.unauthorized('unauthorized + 3'));
+    next(boom.unauthorized('unauthorized'));
   }
   const token = split[1];
   try {
@@ -45,6 +47,9 @@ function isAuthorized({ hasRole, allowSameUser }) {
 }
 
 function checkApiKey(req, res, next) {
+  if (!req.headers['api']) {
+    next(boom.unauthorized('unauthorized - need api key'));
+  }
   const apiKey = req.headers['api'];
   if (apiKey === config.apiKeyShoppit) {
     next();

@@ -4,6 +4,7 @@ const config = {
   urlPushNotification: process.env.URL_PUSH_NOTIFICATION,
   tokenPushNotification: process.env.TOKEN_PUSH_NOTIFICACION,
   email: process.env.EMAIL,
+  private_key_id: process.env.PRIVATE_KEY_ID,
   passEmail: process.env.PASSWORDEMAIL,
   userEmail: process.env.USEREMAIL,
   tokenMP: process.env.ACCESS_TOKEN_MP,
@@ -17,6 +18,9 @@ const config = {
   algoliaApiSearch: process.env.ALGOLIA_API_SEARCH,
   algoliaAppId: process.env.ALGOLIA_APP_ID,
   algoliaUsersIndexName: process.env.ALGOLIA_USER_INDEX_NAME,
+  client_email: process.env.CLIENT_EMAIL,
+  private_key: process.env.PRIVATE_KEY,
+  project_id: process.env.PROJECT_ID,
 };
 
 module.exports = { config };

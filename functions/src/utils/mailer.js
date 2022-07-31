@@ -1,7 +1,9 @@
 const nodemailer = require('nodemailer');
 const { config } = require('../config/config');
+const functions = require('firebase-functions');
 
 const sendEmail = async function (mail) {
+  functions.logger.info(`Sending email to ${mail.to}`);
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     secure: true,
@@ -12,6 +14,7 @@ const sendEmail = async function (mail) {
     },
   });
   await transporter.sendMail(mail);
+  functions.logger.info(`Email sent to ${mail.to}`);
   return { message: 'Email sent' };
 };
 

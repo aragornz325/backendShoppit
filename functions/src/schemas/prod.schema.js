@@ -4,42 +4,67 @@ const isAstroselling = joi.boolean();
 const channel_id = joi.number().integer();
 const available_colors = joi.string();
 const available_size = joi.string();
-const categories = joi.string();
-const currency = joi.string().min(3).max(3).default('ARS');
+const category = joi.string();
+const color = joi.string().max(20);
+const currency = joi.string().valid('ARS', 'USD', 'BRL', 'PYG').default('ARS');
 const stock = joi.number().integer();
-const description = joi.string();
+const description = joi.string().max(255);
+const features = joi.string().max(255);
 const featured = joi.boolean();
 const featuredImage = joi.string().uri();
 const freeShipping = joi.boolean();
-const height = joi.number();
+const height = joi.number().positive();
 const id = joi.string().alphanum(); //TODO: requiere confirmacion del largo del ID
+const image_url = joi.array().items(joi.string().uri());
 const images = joi.array().items(joi.string().uri());
+const images_url = joi.array();
 const in_stock = joi.boolean();
 const is_published = joi.boolean();
-const longitude = joi.number();
+const longitude = joi.number().positive();
 const manage_colors = joi.boolean();
 const manage_size = joi.boolean();
 const manage_stock = joi.boolean();
+const min_sell_amount = joi.number().integer();
 const name = joi.string().max(40);
 const origin = joi.string().max(20);
+const offer_price = joi.number().positive();
+const owner_id = joi.string().alphanum();
 const permalink = joi.string().uri();
 const plataform = joi.string().max(5);
 const price = joi.any();
 const productAttributes = joi.string();
+const publish = joi.boolean();
+const quantity = joi.number().integer();
 const quantity_to_cart = joi.string();
-const regular_price = joi.number().integer().positive();
+const regular_price = joi.number().integer();
 const sale_price = joi.number().integer().positive();
 const selected_variation = joi.string();
-const sku = joi.number();
+const size = joi.string();
+const sku = joi.string();
+const state = joi.string().valid('new', 'used');
 const status = joi.string();
 const stock_quantity = joi.number().positive();
+const stock_XS = joi.number().integer().positive();
+const stock_S = joi.number().integer().positive();
+const stock_M = joi.number().integer().positive();
+const stock_L = joi.number().integer().positive();
+const stock_XL = joi.number().integer().positive();
 const short_description = joi.string().max(250);
 const tags = joi.array();
 const total_sales = joi.number();
+const total_stock = joi.number().positive();
 const type = joi.string();
 const updated = joi.array();
 const variable_products = joi.array();
-const variations = joi.any();
+const variation_type = joi.string().min(3).max(100);
+
+const variations = joi.array().items({
+  variation_type,
+  size,
+  color,
+  quantity,
+  sku,
+});
 const vendor = joi.object({
   minimum_purchase: joi.number(),
   name: joi.string(),
@@ -48,103 +73,83 @@ const vendor = joi.object({
   vendor_id: joi.string().alphanum(),
 });
 const volumen = joi.number();
-const weight = joi.number();
-const width = joi.number();
+const weight = joi.number().positive();
+const width = joi.number().positive();
 const withError = joi.boolean();
-
-const createProduct = joi.object({
-  isAstroselling: isAstroselling.required(),
-  channel_id: channel_id,
-  available_colors: available_colors.required(),
-  available_size: available_size.required(),
-  categories: categories.required(),
-  currency: currency.required(),
-  description: description.required(),
-  featured: featured.required(),
-  featuredImage: featuredImage.required(),
-  freeShipping: freeShipping.required(),
-  height: height.required(),
-  //id: id.required(),
-  images: images.required(),
-  in_stock: in_stock.required(),
-  is_published: is_published.required(),
-  longitude: longitude.required(),
-  manage_colors: manage_colors.required(),
-  manage_size: manage_size.required(),
-  manage_stock: manage_stock.required(),
-  name: name.required(),
-  origin: origin.required(),
-  permalink: permalink.required(),
-  plataform: plataform.required(),
-  price: price.required(),
-  productAttributes: productAttributes.required(),
-  quantity_to_cart: quantity_to_cart.required(),
-  regular_price: regular_price.required(),
-  sale_price: sale_price.required(),
-  selected_variation: selected_variation.required(),
-  sku: sku.required(),
-  status: status.required(),
-  stock_quantity: stock_quantity.required(),
-  short_description: short_description.required(),
-  tags: tags.required(),
-  total_sales: total_sales.required(),
-  type: type.required(),
-  updated: updated.required(),
-  variable_products: variable_products.required(),
-  variations: variations,
-  vendor: vendor.required(),
-  volumen: volumen.required(),
-  weight: weight.required(),
-  width: width.required(),
-  withError: withError.required(),
+const dimensions = joi.object({
+  height,
+  width,
+  longitude,
+  weight,
 });
 
-const updateProduct = joi.object({
-  isAstroselling,
-  channel_id,
-  available_colors,
-  available_size,
-  categories,
-  currency,
-  description,
-  featured,
-  featuredImage,
-  freeShipping,
-  height,
-  id,
-  images,
-  in_stock,
-  is_published,
-  longitude,
-  manage_colors,
-  manage_size,
-  manage_stock,
-  name,
-  origin,
-  permalink,
-  plataform,
-  price,
-  productAttributes,
-  quantity_to_cart,
-  regular_price,
-  sale_price,
-  selected_variation,
-  sku,
-  stock,
-  status,
-  stock_quantity,
-  short_description,
-  tags,
-  total_sales,
-  type,
-  updated,
-  variable_products,
+const createProduct = joi.object({
+  name: name.required(),
+  description: description.required(),
+  regular_price: regular_price.required(),
+  state,
   variations,
-  vendor,
-  volumen,
-  weight,
-  width,
-  withError,
+  images_url,
+  category: category.required(),
+  offer_price,
+  min_sell_amount: min_sell_amount.required(),
+  dimensions,
+  currency,
+  owner_id: owner_id.required(),
+  features: features.required(),
+});
+
+const validateSheetsProduct = joi.object({
+  name: name.required(),
+  offer_price: offer_price.required(),
+  regular_price: regular_price.required(),
+  description: description.required(),
+  image_url: image_url.required(),
+  height: height.required(),
+  width: width.required(),
+  weight: weight.required(),
+  longitude: longitude.required(),
+  sku: sku.required(),
+  stock_XS: stock_XS.required(),
+  stock_S: stock_S.required(),
+  stock_M: stock_M.required(),
+  stock_L: stock_L.required(),
+  stock_XL: stock_XL.required(),
+});
+
+const validateItem = joi
+  .array()
+  .items(
+    name,
+    offer_price,
+    regular_price,
+    description,
+    image_url,
+    height,
+    width,
+    weight,
+    longitude,
+    sku,
+    stock_XS,
+    stock_S,
+    stock_M,
+    stock_L,
+    stock_XL
+  );
+const updateProduct = joi.object({
+  name,
+  description,
+  regular_price,
+  state,
+  variations,
+  images_url,
+  total_stock,
+  sku,
+  category,
+  publish,
+  offer_price,
+  min_sell_amount,
+  dimensions,
 });
 
 const getOne = joi.object({
@@ -155,4 +160,5 @@ module.exports = {
   createProduct,
   updateProduct,
   getOne,
+  validateItem,
 };

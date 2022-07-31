@@ -1,9 +1,6 @@
 const { db } = require('../../config/firebase');
 const functions = require('firebase-functions');
 const boom = require('@hapi/boom');
-const { config } = require('../config/config');
-const algoliasearch = require('algoliasearch');
-
 class MembershipsRepository {
   async createMembership(payload) {
     functions.logger.info('Creating membership');
@@ -62,14 +59,34 @@ class MembershipsRepository {
   }
 
   async getMemberships() {
-    const membershipsRef = db.collection('memberships');
+    const membershipsRef = db.collection('memberships').orderBy('name', 'asc');
     const memberships = await membershipsRef.get();
     const membershipsList = [];
     memberships.forEach((doc) => {
-      membershipsList.push(doc.data());
+      membershipsList.push({ ...doc.data(), id: doc.id });
     });
     functions.logger.info(`getMemberships ok`);
     return membershipsList;
+  }
+
+  async getMembershipById(id) {
+    const membershipsRef = db.collection('memberships').doc(id);
+    const memberships = await membershipsRef.get();
+    if (!memberships.exists) {
+      functions.logger.error(`membership with ID ${id} not found`);
+      throw boom.badData(`membership with ID ${id} not found`);
+    }
+    return memberships.data();
+  }
+
+  async createMembershipHistory(payload) {
+    const membershipsRef = db.collection('memberships_history');
+    await membershipsRef.add({
+      ...payload,
+      createdAt: Math.floor(Date.now() / 1000),
+    });
+    functions.logger.info('Membership history created');
+    return { msg: 'ok' };
   }
 }
 

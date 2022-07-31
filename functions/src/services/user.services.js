@@ -2,16 +2,34 @@ const { getAuth } = require('firebase-admin/auth');
 const boom = require('@hapi/boom');
 const functions = require('firebase-functions');
 const { sendEmail } = require('../utils/mailer');
-const { activeSeller } = require('../utils/baseMails.js');
+const { activeSeller, freeTrial } = require('../utils/baseMails.js');
 const Mercadopago = require('./mercadopago.services');
 const UserRepository = require('../repositories/user.repository');
-const { auth } = require('firebase-admin');
 const userRepository = new UserRepository();
 const mercadopago = new Mercadopago();
+const MembershipsRepository = require('../repositories/memberships.repository');
+const { date } = require('joi');
+const membershipsRepository = new MembershipsRepository();
+const ProductsRepository = require('../repositories/products.repository');
+const productsRepository = new ProductsRepository();
 
 class UserServices {
+  async transformToSeller(body, id) {
+    const check_trial = await membershipsRepository.getMembershipById(
+      body.membership_id
+    );
+    if (check_trial.name !== 'trial') {
+      await this.transformCustomerToSeller(body, id);
+      return { msg: 'ok' };
+    } else {
+      await this.transforCustomerToTrialSeller(body, id);
+      return { msg: 'ok' };
+    }
+  }
+
   async setCustomerClaimToUser(user) {
     const auth = getAuth();
+    functions.logger.info('seting customer claim to user');
     await auth.setCustomUserClaims(user.uid, { role: ['customer'] });
     functions.logger.info(`seting claim to user ${JSON.stringify(user)}`);
     await userRepository.createUser(user);
@@ -33,6 +51,57 @@ class UserServices {
 
     return {
       message: 'ok',
+    };
+  }
+
+  async transforCustomerToTrialSeller(body, id) {
+    const user = await userRepository.getUserById(id);
+    if (!user.id) {
+      functions.logger.warn('missing data to verify seller payment');
+      throw boom.notAcceptable('missing data to verify seller payment');
+    }
+    functions.logger.info('transforming customer to seller - trial plan');
+    const auth = getAuth();
+    functions.logger.info('seting customer claim to user');
+    await auth.setCustomUserClaims(id, { role: ['seller'] });
+    functions.logger.info('updateing user');
+    await userRepository.updateUser(
+      id,
+      {
+        pagoId: 'no payment, is trial',
+        status: 'active',
+        role: 'seller',
+        isVender: true,
+        activeVender: true,
+        user_membership: {
+          membarship_id: body.membership_id,
+          due_date: '', //TODO: revisar fecha de caducidad de la membresia
+          membership_payments: [
+            {
+              platform_name: 'free Trial', //TODO: revisar nombre de la plataforma
+              payment_platform_id: 'trial',
+              payment_date: Math.floor(Date.now() / 1000),
+              payment_status: 'trial',
+            },
+          ],
+        },
+      },
+      true
+    );
+    await membershipsRepository.createMembershipHistory({
+      user_id: id,
+      membership_id: body.membership_id,
+      membership_date: Date.now(),
+    });
+    const mail = {
+      from: 'shoppit info',
+      to: user.email,
+      subject: 'tu cuenta ha sido activada',
+      html: freeTrial(),
+    };
+    sendEmail(mail);
+    return {
+      msg: 'ok',
     };
   }
 
@@ -64,7 +133,9 @@ class UserServices {
     await userRepository.updateUser(
       id,
       {
+        pagaId: body.pagoId,
         status: 'active',
+        role: 'seller',
         isVender: true,
         activeVender: true,
         user_membership: {
@@ -74,7 +145,7 @@ class UserServices {
             {
               platform_name: 'mercadopago', //TODO: revisar nombre de la plataforma
               payment_platform_id: body.pagoId,
-              payment_date: new Date(), //TODO: revisar pasar a UNIX
+              payment_date: Math.floor(Date.now() / 1000), //TODO: revisar pasar a UNIX
               payment_status: response.data.status,
             },
           ],
@@ -89,7 +160,7 @@ class UserServices {
       subject: 'tu cuenta ha sido activada',
       html: activeSeller(),
     };
-    await sendEmail(mail);
+    sendEmail(mail);
     return {
       msg: 'ok',
     };
@@ -149,6 +220,36 @@ class UserServices {
       offset
     );
     return user;
+  }
+
+  async getUserProductsByOwner(id, limit, offset) {
+    const user = await productsRepository.getProductByOwner(id, limit, offset);
+    return user;
+  }
+
+  async registerUser(payload) {
+    console.log(payload);
+    let result = '';
+    await getAuth()
+      .createUser({
+        email: payload.email,
+        emailVerified: false,
+        phoneNumber: payload.phoneNumber,
+        password: payload.password,
+        displayName: payload.displayName,
+        photoURL: payload.photoURL,
+        disabled: false,
+      })
+      .then((userrecord) => {
+        functions.logger.info(
+          (result = userrecord),
+          `user with email:${userrecord.email} has been created, id:${userrecord.uid}`
+        );
+      })
+      .catch((error) => {
+        throw boom.badData(error);
+      });
+    return result;
   }
 }
 

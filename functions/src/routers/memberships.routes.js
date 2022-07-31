@@ -15,16 +15,48 @@ const {
 
 const validatorHandler = require('../middlewares/validatorHandler');
 
+router.get('/', checkApiKey, membershipscontroller.getMemberships);
 router.post(
   '/',
+  checkApiKey,
+  isAuthenticated,
+  isAuthorized({
+    hasRole: ['admin'],
+    allowSameUser: false,
+  }),
   validatorHandler(createMembershipDTO, 'body'),
   membershipscontroller.createMembership
 );
+router.get(
+  '/:id',
+  checkApiKey,
+  isAuthenticated,
+  isAuthorized({
+    hasRole: ['customer', 'admin', 'seller'],
+    allowSameUser: false,
+  }),
+  membershipscontroller.getMembership
+);
 router.patch(
   '/:id',
+  checkApiKey,
+  isAuthenticated,
+  isAuthorized({
+    hasRole: ['admin'],
+    allowSameUser: false,
+  }),
   validatorHandler(updateMembershipDTO, 'body'),
   membershipscontroller.updateMembership
 );
-router.delete('/:id', membershipscontroller.deleteMembership);
+router.delete(
+  '/:id',
+  checkApiKey,
+  isAuthenticated,
+  isAuthorized({
+    hasRole: ['admin'],
+    allowSameUser: false,
+  }),
+  membershipscontroller.deleteMembership
+);
 
 module.exports = router;

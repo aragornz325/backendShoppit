@@ -1,6 +1,6 @@
 const joi = require('joi');
 
-const name = joi.string().valid('standart', 'premium', 'professional');
+const name = joi.string().valid('standart', 'premium', 'professional', 'trial');
 const description = joi.string().min(3).max(255);
 const price = joi.number().min(0).max(999999);
 const payment_cycle = joi.string().valid('mensual', 'trimestral', 'semestral');
